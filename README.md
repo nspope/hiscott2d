@@ -17,7 +17,7 @@ tree   = ape::rcoal(25) # tree
 Simulate some (coin-flip) data,
 
 ```
-traits = matrix(sample(0:1, 50, replace=T), 2, 50)
+traits = matrix(sample(0:1, 50, replace=T), 2, 25)
 ```
 
 The likelihood calculated using 15 intervals per dimension,
@@ -33,5 +33,6 @@ genz2d(data = traits, tree = tree, Lambda = Lambda, Sigma = Sigma, mu = mu)
 ```
 
 Hiscott G, Fox C, Parry M, Bryant D. 2016. Efficient recycled algorithms for quantitative trait models on phylogenies. Genome Biology and Evolution 8: 1338-1350
+
 
 
