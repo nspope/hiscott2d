@@ -29,8 +29,9 @@ hiscott2d(data = traits, tree = tree, Lambda = Lambda, Sigma = Sigma, mu = mu, l
 Compare against Genz-Bretz,
 
 ```
-genz2d(data = traits, tree = tree, Lambda = Lambda, Sigma = Sigma, mu = mu, level = 15)
+genz2d(data = traits, tree = tree, Lambda = Lambda, Sigma = Sigma, mu = mu)
 ```
 
 Hiscott G, Fox C, Parry M, Bryant D. 2016. Efficient recycled algorithms for quantitative trait models on phylogenies. Genome Biology and Evolution 8: 1338-1350
+
 
