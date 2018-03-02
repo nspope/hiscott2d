@@ -1,0 +1,4 @@
+
+.onLoad <- function(libname, pkgname){
+  Rcpp::loadModule("quadrature2d", TRUE)
+}
