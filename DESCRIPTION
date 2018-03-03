@@ -1,6 +1,6 @@
 Package: hiscott2d
 Title: Two-Trait Phylogenetic Threshold Model
-Version: 0.0.0.9000
+Version: 0.0.1.0000
 Authors@R: person("Nate", "Pope", email = "nspope@utexas.edu", role = c("aut", "cre"))
 Description: Computes log-likelihood for the two-trait phylogenetic threshold model using the algorithm of Hiscott et al (2015).
 Depends: R (>= 3.4.0), mvtnorm
@@ -9,5 +9,5 @@ Encoding: UTF-8
 LazyData: true
 LinkingTo: Rcpp, RcppArmadillo, mvtnorm
 RcppModules: quadrature2d, quadrature1d
-Imports: Rcpp, mvtnorm, ape
+Imports: Rcpp, mvtnorm, ape, Matrix
 SystemRequirements: C++11

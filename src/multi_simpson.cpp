@@ -92,9 +92,10 @@ struct quadrature2d
 
   mvn_internal pmvnorm;
 
-  const double tol = 0.00001;
+  const double tol = 0;
 
-  quadrature2d (uword lev = 3) :
+  quadrature2d (uword lev = 3, double tol = 0) :
+    tol (tol),
     lev (lev),
     np  (2*lev + 1)
   {}
@@ -111,11 +112,11 @@ struct quadrature2d
     m2   = (1.-m)/arma::sqrt(s);
     M[0] = pmvnorm(m1, m2, c/arma::prod(arma::sqrt(s)));
 
-    if (M[0] < tol)
-    {
-      M.zeros();
-      return;
-    }
+//    if (M[0] < tol)
+//    {
+//      M.zeros();
+//      return;
+//    }
 
     G.zeros();
     H.zeros();
@@ -153,6 +154,9 @@ struct quadrature2d
     M[8] = M[7]*m[0] + s[0]*(M[6] + H[4]) + c*(2.*M[4] + H[3]);
 
     M = P * M;
+
+    if (tol > 0) // concievably a small accuracy sacrifice for a lot less storage
+      M.elem(arma::find(arma::abs(M) < tol)).zeros();
   }
 
   mat node1 (vec    lbp, // lower bound of parent
@@ -367,7 +371,7 @@ struct quadrature2d
           if (data[i]) a[i] = -mu[i];
           else         b[i] = -mu[i];
         }
-        fj[np*k + l] = log(pmvnorm(a, b, co, data));
+        fj[np*k + l] = std::max(0., pmvnorm(a, b, co, data));
         if (root) goto finish;
         mu [0] += scp [1];
       }
@@ -375,13 +379,13 @@ struct quadrature2d
     }
     finish:
 
-    return fj;
+    return arma::log(fj);
   }
 };
 
 RCPP_MODULE(quadrature2d) {
   Rcpp::class_<quadrature2d>( "quadrature2d" )
-    .constructor<uword>()
+    .constructor<uword, double>()
 //  .method( "calculate", &weights::compute_weights )
 //  .method( "weights",   &weights::weight )
     .method( "node1",     &quadrature2d::node1 )

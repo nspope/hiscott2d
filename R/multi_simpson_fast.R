@@ -1,4 +1,4 @@
-hiscott2d <- function(data, tree, Lambda=diag(2), Sigma=diag(2), mu=rep(0,2), level=3, weights=NULL)
+hiscott2d <- function(data, tree, Lambda=diag(2), Sigma=diag(2), mu=rep(0,2), level=3, weights=NULL, tol=0)
 {
   # Calculate loglikelihood with multivariate Hiscott algorithm.
 
@@ -8,11 +8,7 @@ hiscott2d <- function(data, tree, Lambda=diag(2), Sigma=diag(2), mu=rep(0,2), le
       ncol(data)   != length(tree$tip.label) )
     stop ("Dimension mismatch")
 
-  if (!is.null(weights) && class(weights) == "array")
-    if (!all(dim(weights) == c((level*2+1)^2, (level*2+1)^2, tree$Nnode)))
-      stop ("Weights of wrong dimension")
-
-  ww     = new(quadrature2d, level)
+  ww     = new(quadrature2d, level, tol)
   tree   = ape::reorder.phylo(tree, "postorder")
   nnodes = tree$Nnode
   ntips  = length(tree$tip.label)
@@ -20,8 +16,13 @@ hiscott2d <- function(data, tree, Lambda=diag(2), Sigma=diag(2), mu=rep(0,2), le
   len    = tree$edge.length
   root   = tree$edge[nrow(tree$edge),1]
 
-  if (!is.null(weights) && class(weights) != "array")
-    Fj = array(0, dim = c(npoint^2, npoint^2, nnodes)) # weights
+  if (!is.null(weights) && class(weights) == "list")
+    if (length(weights) != tree$Nnode-1 ||
+        !all(sapply(weights, function(x) all(dim(x)==npoint^2))) )
+      stop ("Weights of wrong dimension")
+
+  if (!is.null(weights) && class(weights) != "list")
+    Fj  = rep(list(), nnodes) # weights
   else
   {
     Fj  = matrix(0, npoint^2, nnodes) # log'd function evaluations
@@ -43,23 +44,31 @@ hiscott2d <- function(data, tree, Lambda=diag(2), Sigma=diag(2), mu=rep(0,2), le
   # quadrature
   for (edge in 1:nrow(tree$edge))
   {
+
     i = tree$edge[edge,2]
     j = tree$edge[edge,1]-ntips
 
     if (i>ntips) 
     # internal node
     {
-      if (!is.null(weights) && class(weights) == "array") 
+      if (!is.null(weights) && class(weights) == "list") 
+      {
         # weights supplied
-        Fj[,j] = Fj[,j] + 
-          ww$node3(Fjs[,j], 
-                   Fj[,i-ntips], 
-                   Fjs[,i-ntips],
-                   weights[,,i-ntips],
-                   j==root-ntips)
-      else if (!is.null(weights) && class(weights) != "array") 
+        mm      = max(Fj[,i-ntips])
+        Fjt     = as.vector(weights[[i-ntips-1]] %*% (exp(Fj[,i-ntips] - mm) * Fjs[,i-ntips]))
+        Fjs[,j] = Fjs[,j] * sign(Fjt)
+        Fj[,j]  = Fj[,j] + log(abs(Fjt)) + mm
+      # b/c of sparse matrix format, do this in R
+      #    ww$node3(Fjs[,j], 
+      #             Fj[,i-ntips], 
+      #             Fjs[,i-ntips],
+      #             weights[[i-ntips]],
+      #             j==root-ntips)
+      }
+      else if (!is.null(weights) && class(weights) != "list") 
         # weights calculated with no quadrature
-        Fj[,,i-ntips] = 
+        Fj[[i-ntips-1]] =
+          Matrix::Matrix(
           ww$node1(Lb[,j],
                    Lb[,i-ntips],
                    Sc[,j],
@@ -67,7 +76,7 @@ hiscott2d <- function(data, tree, Lambda=diag(2), Sigma=diag(2), mu=rep(0,2), le
                    diag(Lambda),
                    Lambda[1,2],
                    len[edge],
-                   j==root-ntips)
+                   j==root-ntips))
       else 
         # weights calculated with quadrature
         Fj[,j] = Fj[,j] + 
@@ -86,7 +95,7 @@ hiscott2d <- function(data, tree, Lambda=diag(2), Sigma=diag(2), mu=rep(0,2), le
     else 
     # tip node
     {
-      if (!is.null(weights) && class(weights) != "array") {}
+      if (!is.null(weights) && class(weights) != "list") {}
       else 
         Fj[,j] = Fj[,j] + 
           ww$tip(Lb[,j],
@@ -101,7 +110,7 @@ hiscott2d <- function(data, tree, Lambda=diag(2), Sigma=diag(2), mu=rep(0,2), le
     }
   }
 
-  if (!is.null(weights) && class(weights) != "array")
+  if (!is.null(weights) && class(weights) != "list")
     return (Fj) # return weights
   else
     return (Fj[1,j]) # return loglikelihood
@@ -154,7 +163,7 @@ hiscott1d <- function(data, tree, Lambda=1, Sigma=1, mu=0, level=3)
   Lb  = matrix(0, 1, nnodes)
   Sc  = matrix(0, 1, nnodes)
   err = (npoint-1)^-4 * ntips/(2*ntips-1)
-  sdv = sqrt(diag(Lambda))
+  sdv = sqrt(Lambda)
   for (node in 1:nnodes)
   {
     Lb[node] = qnorm(err, mu, sqrt(hei[node+ntips])*sdv)
@@ -199,7 +208,7 @@ hiscott1d <- function(data, tree, Lambda=1, Sigma=1, mu=0, level=3)
   return (Fj[1,j]) # return loglikelihood
 }
 
-genz1d <- function(data, tree, Lambda=1, Sigma=1, mu=0)
+genz1d <- function(data, tree, Lambda=1, Sigma=1, mu=0, algorithm=mvtnorm::GenzBretz())
 {
   # Calculate loglikelihood with Genz-Bretz algorithm.
 
@@ -215,7 +224,7 @@ genz1d <- function(data, tree, Lambda=1, Sigma=1, mu=0)
   W      = ape::vcv(tree)*Lambda + diag(length(data))*Sigma
   m      = rep(mu,length(data))
 
-  out    = mvtnorm::pmvnorm(lower, upper, mean=m, sigma=W)
+  out    = mvtnorm::pmvnorm(lower, upper, mean=m, sigma=W, algorithm=algorithm)
   attr(out, "error") = log(out + c(-attr(out, "error"),attr(out, "error")))
   log(out)
 }
