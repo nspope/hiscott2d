@@ -68,7 +68,7 @@ struct mvn_internal
   }
 };
 
-struct weights
+struct quadrature2d
 {
   const mat::fixed<9,9> P = {{1, -3,  2, -3,   9,  -6,  2,  -6,  4},
                              {0,  4, -4,  0, -12,  12,  0,   8, -8},
@@ -94,7 +94,7 @@ struct weights
 
   const double tol = 0.00001;
 
-  weights (uword lev = 3) :
+  quadrature2d (uword lev = 3) :
     lev (lev),
     np  (2*lev + 1)
   {}
@@ -380,13 +380,14 @@ struct weights
 };
 
 RCPP_MODULE(quadrature2d) {
-  Rcpp::class_<weights>( "quadrature2d" )
+  Rcpp::class_<quadrature2d>( "quadrature2d" )
     .constructor<uword>()
 //  .method( "calculate", &weights::compute_weights )
 //  .method( "weights",   &weights::weight )
-    .method( "node1",     &weights::node1 )
-    .method( "node2",     &weights::node2 )
-    .method( "node3",     &weights::node3 )
-    .method( "tip",       &weights::tip )
+    .method( "node1",     &quadrature2d::node1 )
+    .method( "node2",     &quadrature2d::node2 )
+    .method( "node3",     &quadrature2d::node3 )
+    .method( "tip",       &quadrature2d::tip )
     ;
 }
+

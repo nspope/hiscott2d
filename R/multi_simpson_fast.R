@@ -127,3 +127,95 @@ genz2d <- function(data, tree, Lambda=diag(2), Sigma=diag(2), mu=rep(0,2))
   attr(out, "error") = log(out + c(-attr(out, "error"),attr(out, "error")))
   log(out)
 }
+
+hiscott1d <- function(data, tree, Lambda=1, Sigma=1, mu=0, level=3)
+{
+  # Calculate loglikelihood with univariate Hiscott algorithm.
+
+  if (length(Lambda) != 1 || 
+      length(Sigma)  != 1 || 
+      length(mu)     != 1 || 
+      length(data)   != length(tree$tip.label) )
+    stop ("Dimension mismatch")
+
+  ww     = new(quadrature1d, level)
+  tree   = ape::reorder.phylo(tree, "postorder")
+  nnodes = tree$Nnode
+  ntips  = length(tree$tip.label)
+  npoint = level*2 + 1
+  len    = tree$edge.length
+  root   = tree$edge[nrow(tree$edge),1]
+
+  Fj  = matrix(0, npoint, nnodes) # log'd function evaluations
+  Fjs = matrix(1, npoint, nnodes) # sign of function evaluations
+
+  # bounds
+  hei = ape::node.depth.edgelength(tree)
+  Lb  = matrix(0, 1, nnodes)
+  Sc  = matrix(0, 1, nnodes)
+  err = (npoint-1)^-4 * ntips/(2*ntips-1)
+  sdv = sqrt(diag(Lambda))
+  for (node in 1:nnodes)
+  {
+    Lb[node] = qnorm(err, mu, sqrt(hei[node+ntips])*sdv)
+    Sc[node] = (qnorm(1-err, mu, sqrt(hei[node+ntips])*sdv) - Lb[node])/(npoint-1)
+  }
+
+  # quadrature
+  for (edge in 1:nrow(tree$edge))
+  {
+    i = tree$edge[edge,2]
+    j = tree$edge[edge,1]-ntips
+
+    if (i>ntips) 
+    # internal node
+    {
+      Fj[,j] = Fj[,j] + 
+        ww$node(Fjs[,j], 
+                Fj[,i-ntips], 
+                Fjs[,i-ntips],
+                Lb[j],
+                Lb[i-ntips],
+                Sc[j],
+                Sc[i-ntips],
+                Lambda,
+                len[edge],
+                j==root-ntips)
+    } 
+    else 
+    # tip node
+    {
+      Fj[,j] = Fj[,j] + 
+        ww$tip(Lb[j],
+               Sc[j],
+               data[i], 
+               Lambda, 
+               Sigma, 
+               len[edge],
+               j==root-ntips)
+    }
+  }
+
+  return (Fj[1,j]) # return loglikelihood
+}
+
+genz1d <- function(data, tree, Lambda=1, Sigma=1, mu=0)
+{
+  # Calculate loglikelihood with Genz-Bretz algorithm.
+
+  if (length(Lambda) != 1 || 
+      length(Sigma)  != 1 || 
+      length(mu)     != 1 || 
+      length(data)   != length(tree$tip.label) )
+    stop ("Dimension mismatch")
+
+  tree   = ape::reorder.phylo(tree, "postorder")
+  lower  = log(c(data))
+  upper  = -log(1-c(data))
+  W      = ape::vcv(tree)*Lambda + diag(length(data))*Sigma
+  m      = rep(mu,length(data))
+
+  out    = mvtnorm::pmvnorm(lower, upper, mean=m, sigma=W)
+  attr(out, "error") = log(out + c(-attr(out, "error"),attr(out, "error")))
+  log(out)
+}

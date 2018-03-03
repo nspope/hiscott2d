@@ -8,9 +8,11 @@ using namespace Rcpp;
 
 
 RcppExport SEXP _rcpp_module_boot_quadrature2d();
+RcppExport SEXP _rcpp_module_boot_quadrature1d();
 
 static const R_CallMethodDef CallEntries[] = {
     {"_rcpp_module_boot_quadrature2d", (DL_FUNC) &_rcpp_module_boot_quadrature2d, 0},
+    {"_rcpp_module_boot_quadrature1d", (DL_FUNC) &_rcpp_module_boot_quadrature1d, 0},
     {NULL, NULL, 0}
 };
 
