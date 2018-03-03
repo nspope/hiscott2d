@@ -32,7 +32,15 @@ Compare against Genz-Bretz,
 genz2d(data = traits, tree = tree, Lambda = Lambda, Sigma = Sigma, mu = mu)
 ```
 
+The univariate method is also included,
+
+```
+hiscott1d(data = traits[1,], tree = tree, Lambda = Lambda[1,1], Sigma = Sigma[1,1], mu = mu[1], level = 15)
+genz1d(data = traits[1,], tree = tree, Lambda = Lambda[1,1], Sigma = Sigma[1,1], mu = mu[1])
+```
+
 Hiscott G, Fox C, Parry M, Bryant D. 2016. Efficient recycled algorithms for quantitative trait models on phylogenies. Genome Biology and Evolution 8: 1338-1350
+
 
 
 
