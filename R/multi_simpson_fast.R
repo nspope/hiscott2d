@@ -116,6 +116,67 @@ hiscott2d <- function(data, tree, Lambda=diag(2), Sigma=diag(2), mu=rep(0,2), le
     return (Fj[1,j]) # return loglikelihood
 }
 
+hiscott2drot <- function(data, tree, Lambda=diag(2), Sigma=diag(2), mu=rep(0,2), level=3)
+{
+  # Calculate loglikelihood with multivariate Hiscott algorithm.
+
+  if (nrow(Lambda) != 2 || ncol(Lambda) != 2 ||
+      nrow(Sigma)  != 2 || ncol(Sigma)  != 2 ||
+      length(mu)   != 2 || nrow(data)   != 2 ||
+      ncol(data)   != length(tree$tip.label) )
+    stop ("Dimension mismatch")
+
+  tree   = ape::reorder.phylo(tree, "postorder")
+  nnodes = tree$Nnode
+  ntips  = length(tree$tip.label)
+  npoint = level*2 + 1
+  len    = tree$edge.length
+  root   = tree$edge[nrow(tree$edge),1]
+  ww     = new(quadrature2drot, level, ntips)
+
+  Fj  = matrix(0, npoint^2, nnodes) # log'd function evaluations
+  Fjs = matrix(1, npoint^2, nnodes) # sign of function evaluations
+
+  # scaling etc.
+  hei = ape::node.depth.edgelength(tree)
+  Lambda = eigen(Lambda)
+  Lambda = Lambda$vectors %*% diag(sqrt(Lambda$values))
+  Sigma = eigen(Sigma)
+  Sigma = Sigma$vectors %*% diag(sqrt(Sigma$values))
+
+  # quadrature
+  for (edge in 1:nrow(tree$edge))
+  {
+
+    i = tree$edge[edge,2]
+    j = tree$edge[edge,1]
+
+    if (i>ntips) 
+    # internal node
+      Fj[,j-ntips] = Fj[,j-ntips] + 
+        ww$node(Fjs[,j-ntips], 
+                Fj[,i-ntips], 
+                Fjs[,i-ntips],
+                hei[j],
+                hei[i],
+                mu,
+                j==root-ntips)
+    else 
+    # tip node
+      Fj[,j-ntips] = Fj[,j-ntips] + 
+        ww$tip(hei[j],
+               hei[i],
+               mu,
+               Lambda,
+               Sigma,
+               data[,i],
+               j==root-ntips)
+  }
+
+  return (Fj[1,j-ntips]) # return loglikelihood
+}
+
+
 genz2d <- function(data, tree, Lambda=diag(2), Sigma=diag(2), mu=rep(0,2))
 {
   # Calculate loglikelihood with Genz-Bretz algorithm.

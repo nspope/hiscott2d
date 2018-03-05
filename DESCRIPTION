@@ -8,6 +8,6 @@ License: GNU GPL
 Encoding: UTF-8
 LazyData: true
 LinkingTo: Rcpp, RcppArmadillo, mvtnorm
-RcppModules: quadrature2d, quadrature1d
+RcppModules: quadrature2d, quadrature2drot, quadrature1d
 Imports: Rcpp, mvtnorm, ape, Matrix
 SystemRequirements: C++11
