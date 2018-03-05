@@ -481,8 +481,8 @@ struct quadrature2drot
     fi  = arma::exp(fi) % fis;
 
     // scaling
-    vec lbp = 0.5 * (glb + gmu) * sqrt(hp)/sqrt(h) / gsc; 
-    vec  lb = 0.5 * (glb + gmu) / gsc;
+    vec lbp = 0.5 * glb * arma::ones<vec>(2) * sqrt(hp)/sqrt(h) / gsc; 
+    vec  lb = 0.5 * glb * arma::ones<vec>(2) / gsc;
     double le  = h - hp;
     double scp = 0.5 * sqrt(hp)/sqrt(h);
     double  va = 0.25 * le/h * 1./(gsc * gsc);

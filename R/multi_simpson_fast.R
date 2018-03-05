@@ -160,7 +160,7 @@ hiscott2drot <- function(data, tree, Lambda=diag(2), Sigma=diag(2), mu=rep(0,2),
                 hei[j],
                 hei[i],
                 mu,
-                j==root-ntips)
+                j==root)
     else 
     # tip node
       Fj[,j-ntips] = Fj[,j-ntips] + 
@@ -170,7 +170,7 @@ hiscott2drot <- function(data, tree, Lambda=diag(2), Sigma=diag(2), mu=rep(0,2),
                Lambda,
                Sigma,
                data[,i],
-               j==root-ntips)
+               j==root)
   }
 
   return (Fj[1,j-ntips]) # return loglikelihood
