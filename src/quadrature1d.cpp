@@ -1,4 +1,5 @@
 #include <RcppArmadillo.h> 
+#include "mvn_internal.hpp"
 
 // [[Rcpp::depends(RcppArmadillo,mvtnorm)]]
 // [[Rcpp::plugins(cpp11)]]
